@@ -17,3 +17,22 @@ class ProblemResponse(ProblemBase):
 
     class Config:
         from_attributes = True
+
+from datetime import datetime
+
+class SessionBase(BaseModel):
+    problem_id:int
+    duration_minutes:int
+    status:str
+
+
+class SessionCreate(SessionBase):
+    pass
+
+class SessionResponse(SessionBase):
+    id:int
+    created_at :datetime
+    
+    class Config:
+        from_attributes = True
+        
