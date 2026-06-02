@@ -24,3 +24,13 @@ def create_problem(problem: schemas.ProblemCreate, db: Session = Depends(get_db)
 @router.get("/", response_model=List[schemas.ProblemResponse])
 def get_problems(db: Session = Depends(get_db)):
     return db.query(models.Problem).all()
+
+@router.put("/{problem_id}",response_model = schemas.ProblemUpdate)
+def update_problem(db: Session = Depends(get_db),problem_id:int,problem:schemas.ProblemUpdate):
+    db_problem = db.query(models.Problem).filter(models.Problem.id==problem_id).first()
+    if not db_problem:
+        raise HTTPException(status_code=404,detail= "Problem not found")
+    update_data = problem.model_dump(exclude_unset=True)
+    for key,value in update_data.items():
+        setattr(db_problem,key,value)
+

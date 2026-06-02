@@ -18,8 +18,16 @@ class ProblemResponse(ProblemBase):
     class Config:
         from_attributes = True
 
-from datetime import datetime
+class ProblemUpdate(BaseModel):
+    title: Optional[str]
+    difficulty: Optional[str]
+    topic: Optional[str]
+    is_solved: Optional[bool] = None
 
+
+
+
+from datetime import datetime
 class SessionBase(BaseModel):
     problem_id:int
     duration_minutes:int
