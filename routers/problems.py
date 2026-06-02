@@ -26,7 +26,7 @@ def get_problems(db: Session = Depends(get_db)):
     return db.query(models.Problem).all()
 
 @router.put("/{problem_id}",response_model = schemas.ProblemUpdate)
-def update_problem(db: Session = Depends(get_db),problem_id:int,problem:schemas.ProblemUpdate):
+def update_problem(problem_id:int,problem:schemas.ProblemUpdate,db: Session = Depends(get_db)):
     db_problem = db.query(models.Problem).filter(models.Problem.id==problem_id).first()
     if not db_problem:
         raise HTTPException(status_code=404,detail= "Problem not found")
