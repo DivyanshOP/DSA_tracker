@@ -33,4 +33,7 @@ def update_problem(problem_id:int,problem:schemas.ProblemUpdate,db: Session = De
     update_data = problem.model_dump(exclude_unset=True)
     for key,value in update_data.items():
         setattr(db_problem,key,value)
+    db.commit()
+    db.refresh(db_problem)
+    return db_problem
 

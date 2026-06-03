@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
 
@@ -15,8 +15,7 @@ class ProblemCreate(ProblemBase):
 class ProblemResponse(ProblemBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ProblemUpdate(BaseModel):
     title: Optional[str]
@@ -44,3 +43,7 @@ class SessionResponse(SessionBase):
     class Config:
         from_attributes = True
         
+class AnalyticsSummary(BaseModel):
+    total_problems: int
+    total_solved: int
+    total_minutes: int
