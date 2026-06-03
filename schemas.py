@@ -18,9 +18,9 @@ class ProblemResponse(ProblemBase):
     model_config = ConfigDict(from_attributes=True)
 
 class ProblemUpdate(BaseModel):
-    title: Optional[str]
-    difficulty: Optional[str]
-    topic: Optional[str]
+    title: Optional[str] = None
+    difficulty: Optional[str] = None
+    topic: Optional[str]= None
     is_solved: Optional[bool] = None
 
 
