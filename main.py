@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 import models
 from database import engine
-from routers import problems,sessions,analytics
+from routers import problems,sessions,analytics,sync
 
 # Create the database tables
 models.Base.metadata.create_all(bind=engine)
@@ -12,6 +12,7 @@ app = FastAPI(title="DSA Tracker API")
 app.include_router(problems.router)
 app.include_router(sessions.router)
 app.include_router(analytics.router)
+app.include_router(sync.router)
 @app.get("/")
 def root():
     return {"message": "DSA Tracker API is running. Go to /docs to test."}

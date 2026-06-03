@@ -7,6 +7,7 @@ class ProblemBase(BaseModel):
     difficulty: str
     topic: str
     is_solved: bool = False
+    url: Optional[str] = None
 
 
 class ProblemCreate(ProblemBase):
@@ -21,6 +22,7 @@ class ProblemUpdate(BaseModel):
     title: Optional[str] = None
     difficulty: Optional[str] = None
     topic: Optional[str]= None
+    url: Optional[str] = None
     is_solved: Optional[bool] = None
 
 

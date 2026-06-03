@@ -11,7 +11,7 @@ class Problem(Base):
     difficulty = Column(String)  
     topic = Column(String)       
     is_solved = Column(Boolean, default=False)
-
+    url = Column(String, nullable=True)
     
     sessions = relationship("Session", back_populates="problem")
 
