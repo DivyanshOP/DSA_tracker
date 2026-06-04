@@ -6,6 +6,6 @@ pandas==2.2.2
 requests==2.32.3
 psycopg2-binary==2.9.9
 bcrypt==3.2.2
-passlib[bcrypt]
+passlib
 python-jose[cryptography]
 python-multipart
