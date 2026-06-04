@@ -1,7 +1,8 @@
+import os
 import streamlit as st
 import requests
 
-API_URL = "http://localhost:8000"
+API_URL = os.getenv("BACKEND_API_URL", "http://localhost:8000")
 
 st.set_page_config(page_title="DSA Study Tracker", layout="wide")
 st.title("DSA Tracker Dashboard")
@@ -49,7 +50,7 @@ except:
 
 if triage_list:
     st.divider()
-    st.warning(f"🔔 **Inbox:** You have {len(triage_list)} synced problems missing study data!")
+    st.warning(f"**Inbox:** You have {len(triage_list)} synced problems missing study data!")
     
     current_problem = triage_list[0]
     
@@ -76,11 +77,10 @@ if triage_list:
                 requests.post(f"{API_URL}/sessions/", json=session_payload)
                 st.success("Saved!")
                 st.rerun() 
-# --- SPACED REPETITION: DUE TODAY ---
+
 try:
     due_resp = requests.get(f"{API_URL}/problems/due")
     
-    # NEW DEBUG LOGIC:
     if due_resp.status_code != 200:
         st.error(f"Backend rejected the request! Status: {due_resp.status_code} | Error: {due_resp.text}")
         due_list = []
@@ -92,9 +92,8 @@ except Exception as e:
     due_list = []  
 
 st.divider()
-st.error(f"🎯 **Spaced Repetition:** You have {len(due_list)} problems due for review today!")
+st.error(f"**Spaced Repetition:** You have {len(due_list)} problems due for review today!")
     
-    # Display due problems in a clean table
 if due_list:
     st.dataframe(
         due_list,
@@ -150,7 +149,7 @@ with form_col1:
                 "topic": topic, 
                 "is_solved": Solved
             }
-            # Send the POST request to your backend
+            
             response = requests.post(f"{API_URL}/problems/", json=payload)
             if response.status_code == 200:
                 st.success(f"Added '{title}' successfully!")
