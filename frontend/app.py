@@ -9,10 +9,56 @@ st.title("DSA Tracker Dashboard")
 st.write("Welcome to your local problem-solving database.")
 st.divider()
 
+if "token" not in st.session_state:
+    st.session_state.token = None
+if "username" not in st.session_state:
+    st.session_state.username = None
+
+
+if not st.session_state.token:
+    st.title("DSA Tracker Login")
+    tab1, tab2 = st.tabs(["Login", "Register"])
+    
+    with tab1:
+        with st.form("login_form",clear_on_submit=True):
+            log_user = st.text_input("Username")
+            log_pass = st.text_input("Password", type="password")
+            if st.form_submit_button("Login"):
+                resp = requests.post(f"{API_URL}/users/login", data={"username": log_user, "password": log_pass})
+                if resp.status_code == 200:
+                    st.session_state.token = resp.json().get("access_token")
+                    st.session_state.username = log_user
+                    st.rerun()
+                else:
+                    st.error("Invalid credentials.")
+                    
+    with tab2:
+        with st.form("register_form",clear_on_submit=True):
+            reg_user = st.text_input("Choose Username")
+            reg_pass = st.text_input("Choose Password", type="password")
+            if st.form_submit_button("Register"):
+                resp = requests.post(f"{API_URL}/users/register", json={"username": reg_user, "password": reg_pass})
+                if resp.status_code == 200:
+                    st.success("Registered successfully! You can now log in.")
+                else:
+                    st.error(resp.json().get("detail", "Registration failed"))
+    
+    
+    st.stop() 
+
+
+st.sidebar.success(f"👤 Logged in as: **{st.session_state.username}**")
+if st.sidebar.button("Logout"):
+    st.session_state.token = None
+    st.session_state.username = None
+    st.rerun()
+
+# The VIP Pass we must attach to every request
+auth_headers = {"Authorization": f"Bearer {st.session_state.token}"}
 def get_analytics():
     try:
         
-        response = requests.get(f"{API_URL}/analytics/summary")
+        response = requests.get(f"{API_URL}/analytics/summary",headers=auth_headers)
         response.raise_for_status()  
         return response.json()       
     except requests.exceptions.RequestException as e:
@@ -36,14 +82,14 @@ if summary_data:
         st.metric(label="Total Time (Minutes)", value=summary_data["total_minutes"])
 
 try:
-    problems_req = requests.get(f"{API_URL}/problems/")
+    problems_req = requests.get(f"{API_URL}/problems/", headers=auth_headers)
     problems_list = problems_req.json() if problems_req.status_code == 200 else []
 except:
     problems_list = []
 
 
 try:
-    triage_resp = requests.get(f"{API_URL}/problems/triage")
+    triage_resp = requests.get(f"{API_URL}/problems/triage",headers=auth_headers)
     triage_list = triage_resp.json() if triage_resp.status_code == 200 else []
 except:
     triage_list = []
@@ -73,13 +119,13 @@ if triage_list:
                     "duration_minutes": duration,
                     "status": status
                 }
-                # Log the session
-                requests.post(f"{API_URL}/sessions/", json=session_payload)
+                
+                requests.post(f"{API_URL}/sessions/", json=session_payload,headers=auth_headers)
                 st.success("Saved!")
                 st.rerun() 
 
 try:
-    due_resp = requests.get(f"{API_URL}/problems/due")
+    due_resp = requests.get(f"{API_URL}/problems/due",headers=auth_headers)
     
     if due_resp.status_code != 200:
         st.error(f"Backend rejected the request! Status: {due_resp.status_code} | Error: {due_resp.text}")
@@ -109,7 +155,7 @@ st.divider()
 st.subheader("AI Smart Coach")
 
 try:
-    coach_resp = requests.get(f"{API_URL}/analytics/coach")
+    coach_resp = requests.get(f"{API_URL}/analytics/coach",headers=auth_headers)
     coach_data = coach_resp.json()
     
     if coach_data.get("status") == "success":
@@ -150,7 +196,7 @@ with form_col1:
                 "is_solved": Solved
             }
             
-            response = requests.post(f"{API_URL}/problems/", json=payload)
+            response = requests.post(f"{API_URL}/problems/", json=payload,headers=auth_headers)
             if response.status_code == 200:
                 st.success(f"Added '{title}' successfully!")
                 st.rerun() 
@@ -182,11 +228,11 @@ with form_col2:
                 "duration_minutes": duration,
                 "status": status
             }
-            response = requests.post(f"{API_URL}/sessions/", json=session_payload)
+            response = requests.post(f"{API_URL}/sessions/", json=session_payload,headers=auth_headers)
             
             if mark_as_solved:
                 update_payload = {"is_solved": True}
-                update_resp = requests.put(f"{API_URL}/problems/{problem_id}", json=update_payload)
+                update_resp = requests.put(f"{API_URL}/problems/{problem_id}", json=update_payload,headers=auth_headers)
                 if update_resp.status_code != 200:
                     st.error(f"Backend rejected the update! Error: {update_resp.text}")
                     st.stop()
@@ -198,7 +244,7 @@ with form_col2:
 st.divider()
 st.header("Problem Library")
 
-with st.expander("Auto-Sync with LeetCode"):
+with st.expander("Auto-Sync with LeetCode(Only 20 recent submissions)"):
     col1, col2 = st.columns([3, 1])
     with col1:
         lc_username = st.text_input("Enter your LeetCode Username", placeholder="e.g., neetcode")
@@ -209,7 +255,7 @@ with st.expander("Auto-Sync with LeetCode"):
         
     if sync_btn and lc_username:
         with st.spinner("Fetching data from LeetCode..."):
-            sync_resp = requests.post(f"{API_URL}/sync/leetcode/{lc_username}")
+            sync_resp = requests.post(f"{API_URL}/sync/leetcode/{lc_username}",headers=auth_headers)
             
             if sync_resp.status_code == 200:
                 result = sync_resp.json()

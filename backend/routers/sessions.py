@@ -1,11 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from typing import List
-import models,schemas
-from database import SessionLocal
 from datetime import date, timedelta
-router = APIRouter(prefix='/sessions', tags=["Sessions"])
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+import models, schemas, auth
+from database import SessionLocal
 
+router = APIRouter(prefix="/sessions", tags=["Sessions"])
 
 def get_db():
     db = SessionLocal()
@@ -14,34 +13,23 @@ def get_db():
     finally:
         db.close()
 
-
-@router.get("/",response_model = List[schemas.SessionResponse])
-def get_sessions(db:Session=Depends(get_db)):
-    return db.query(models.Session).all()
-
-@router.post("/", response_model=schemas.SessionResponse)
-def create_session(session: schemas.SessionCreate, db: Session = Depends(get_db)):
-    db_session = models.Session(**session.model_dump())
+@router.post("/")
+def create_session(session: schemas.SessionCreate, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    
+    db_session = models.Session(**session.model_dump(), user_id=current_user.id)
     db.add(db_session)
     
     
     problem = db.query(models.Problem).filter(models.Problem.id == session.problem_id).first()
-    
     if problem:
-        
         problem.is_solved = True 
-        
-        
         today = date.today()
         if session.status == "Confused":
-            problem.next_review_date = today + timedelta(days=1)  
+            problem.next_review_date = today + timedelta(days=1)
         elif session.status == "Needed Hints":
-            problem.next_review_date = today + timedelta(days=3) 
+            problem.next_review_date = today + timedelta(days=3)
         elif session.status == "Solved smoothly":
-            problem.next_review_date = today + timedelta(days=7)  
+            problem.next_review_date = today + timedelta(days=7)
             
     db.commit()
-    db.refresh(db_session)
     return db_session
-
-

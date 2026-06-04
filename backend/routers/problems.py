@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from typing import List
-import models, schemas
-from database import SessionLocal
 from datetime import date
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+import models, schemas, auth
+from database import SessionLocal
+
 router = APIRouter(prefix="/problems", tags=["Problems"])
 
 def get_db():
@@ -13,48 +13,32 @@ def get_db():
     finally:
         db.close()
 
-@router.post("/", response_model=schemas.ProblemResponse)
-def create_problem(problem: schemas.ProblemCreate, db: Session = Depends(get_db)):
-    db_problem = models.Problem(**problem.model_dump())
+
+@router.get("/")
+def get_problems(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    return db.query(models.Problem).filter(models.Problem.user_id == current_user.id).all()
+
+@router.post("/")
+def create_problem(problem: schemas.ProblemBase, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    
+    db_problem = models.Problem(**problem.model_dump(), user_id=current_user.id)
     db.add(db_problem)
     db.commit()
     db.refresh(db_problem)
     return db_problem
 
-@router.get("/", response_model=List[schemas.ProblemResponse])
-def get_problems(db: Session = Depends(get_db)):
-    return db.query(models.Problem).all()
-
-@router.put("/{problem_id}",response_model = schemas.ProblemUpdate)
-def update_problem(problem_id:int,problem:schemas.ProblemUpdate,db: Session = Depends(get_db)):
-    db_problem = db.query(models.Problem).filter(models.Problem.id==problem_id).first()
-    if not db_problem:
-        raise HTTPException(status_code=404,detail= "Problem not found")
-    update_data = problem.model_dump(exclude_unset=True)
-    for key,value in update_data.items():
-        setattr(db_problem,key,value)
-    db.commit()
-    db.refresh(db_problem)
-    return db_problem
-
 @router.get("/triage")
-def get_triage_queue(db: Session = Depends(get_db)):
-    # Fetch problems that are solved but have ZERO study sessions attached
-    triage_problems = db.query(models.Problem).filter(
+def get_triage_queue(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    return db.query(models.Problem).filter(
+        models.Problem.user_id == current_user.id,
         models.Problem.is_solved == True,
         ~models.Problem.sessions.any()
     ).all()
-    
-    return triage_problems
 
 @router.get("/due")
-def get_due_problems(db: Session = Depends(get_db)):
-    today = date.today()
-    # Fetch problems that are solved AND their review date is today or earlier
-    due_problems = db.query(models.Problem).filter(
+def get_due_problems(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    return db.query(models.Problem).filter(
+        models.Problem.user_id == current_user.id,
         models.Problem.is_solved == True,
-        models.Problem.next_review_date != None,
-        models.Problem.next_review_date <= today
+        models.Problem.next_review_date <= date.today()
     ).all()
-    
-    return due_problems

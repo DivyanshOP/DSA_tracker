@@ -51,3 +51,11 @@ class AnalyticsSummary(BaseModel):
     total_problems: int
     total_solved: int
     total_minutes: int
+
+class UserCreate(BaseModel):
+    username: str
+    password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
