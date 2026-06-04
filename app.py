@@ -34,6 +34,12 @@ if summary_data:
     with col3:
         st.metric(label="Total Time (Minutes)", value=summary_data["total_minutes"])
 
+try:
+    problems_req = requests.get(f"{API_URL}/problems/")
+    problems_list = problems_req.json() if problems_req.status_code == 200 else []
+except:
+    problems_list = []
+
 
 try:
     triage_resp = requests.get(f"{API_URL}/problems/triage")
@@ -70,6 +76,36 @@ if triage_list:
                 requests.post(f"{API_URL}/sessions/", json=session_payload)
                 st.success("Saved!")
                 st.rerun() 
+# --- SPACED REPETITION: DUE TODAY ---
+try:
+    due_resp = requests.get(f"{API_URL}/problems/due")
+    
+    # NEW DEBUG LOGIC:
+    if due_resp.status_code != 200:
+        st.error(f"Backend rejected the request! Status: {due_resp.status_code} | Error: {due_resp.text}")
+        due_list = []
+    else:
+        due_list = due_resp.json()
+        
+except Exception as e:
+    st.error(f"Failed to connect to backend: {e}")
+    due_list = []  
+
+st.divider()
+st.error(f"🎯 **Spaced Repetition:** You have {len(due_list)} problems due for review today!")
+    
+    # Display due problems in a clean table
+if due_list:
+    st.dataframe(
+        due_list,
+        width="stretch",
+        hide_index=True,
+        column_order=["title", "difficulty", "topic", "url"],
+        column_config={
+            "url": st.column_config.LinkColumn("Practice Link", display_text="Solve Again 🔗")
+        }
+    )
+
 st.divider()
 st.subheader("AI Smart Coach")
 
@@ -125,12 +161,7 @@ with form_col1:
 with form_col2:
     st.subheader("Log Study Session")
     
-    try:
-        problems_req = requests.get(f"{API_URL}/problems/")
-        problems_list = problems_req.json()
-    except:
-        problems_list = []
-        
+    
     with st.form("log_session_form", clear_on_submit=True):
         problem_options = {p["title"]: p["id"] for p in problems_list}
         

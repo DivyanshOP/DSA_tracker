@@ -16,6 +16,10 @@ def get_db():
 @router.post("/leetcode/{username}")
 def sync_leetcode(username: str, db: Session = Depends(get_db)):
     url = "https://leetcode.com/graphql"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Content-Type": "application/json"
+    }
     
     # QUERY 1: Get the list of recent problems
     recent_query = """
@@ -27,7 +31,13 @@ def sync_leetcode(username: str, db: Session = Depends(get_db)):
     }
     """
     try:
-        response = requests.post(url, json={"query": recent_query, "variables": {"username": username, "limit": 20}})
+        response = requests.post(
+            url, 
+            json={"query": recent_query, "variables": {"username": username, "limit": 20}},
+            headers=headers, 
+            timeout=10  # Gives up after 10 seconds
+        )
+        # response = requests.post(url, json={"query": recent_query, "variables": {"username": username, "limit": 20}})
         response.raise_for_status()
         submissions = response.json().get("data", {}).get("recentAcSubmissionList", [])
         
@@ -57,8 +67,13 @@ def sync_leetcode(username: str, db: Session = Depends(get_db)):
         slug = sub["titleSlug"]
         problem_url = f"https://leetcode.com/problems/{slug}/"
         
-        
-        detail_resp = requests.post(url, json={"query": detail_query, "variables": {"titleSlug": slug}})
+        detail_resp = requests.post(
+            url, 
+            json={"query": detail_query, "variables": {"titleSlug": slug}},
+            headers=headers,
+            timeout=5   # Gives up after 5 seconds per problem
+        )
+        # detail_resp = requests.post(url, json={"query": detail_query, "variables": {"titleSlug": slug}})
         question_data = detail_resp.json().get("data", {}).get("question", {})
         
         
