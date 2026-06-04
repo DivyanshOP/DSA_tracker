@@ -21,7 +21,7 @@ def sync_leetcode(username: str, db: Session = Depends(get_db)):
         "Content-Type": "application/json"
     }
     
-    # QUERY 1: Get the list of recent problems
+    
     recent_query = """
     query getRecentSubmissions($username: String!, $limit: Int!) {
         recentAcSubmissionList(username: $username, limit: $limit) {
@@ -35,9 +35,9 @@ def sync_leetcode(username: str, db: Session = Depends(get_db)):
             url, 
             json={"query": recent_query, "variables": {"username": username, "limit": 20}},
             headers=headers, 
-            timeout=10  # Gives up after 10 seconds
+            timeout=10  
         )
-        # response = requests.post(url, json={"query": recent_query, "variables": {"username": username, "limit": 20}})
+        
         response.raise_for_status()
         submissions = response.json().get("data", {}).get("recentAcSubmissionList", [])
         
@@ -71,9 +71,9 @@ def sync_leetcode(username: str, db: Session = Depends(get_db)):
             url, 
             json={"query": detail_query, "variables": {"titleSlug": slug}},
             headers=headers,
-            timeout=5   # Gives up after 5 seconds per problem
+            timeout=5   
         )
-        # detail_resp = requests.post(url, json={"query": detail_query, "variables": {"titleSlug": slug}})
+        
         question_data = detail_resp.json().get("data", {}).get("question", {})
         
         
