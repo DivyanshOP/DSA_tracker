@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-import models, schemas
+import models, schemas,auth
 from database import SessionLocal
 from sqlalchemy.sql import func
 import pandas as pd
@@ -16,16 +16,30 @@ def get_db():
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
-@router.get(path='/summary',response_model=schemas.AnalyticsSummary)
-def get_summary(db:Session=Depends(get_db)):
-    total_problems = db.query(models.Problem).count()
-    total_solved = db.query(models.Problem).filter(models.Problem.is_solved == True).count()
-    total_time = db.query(func.sum(models.Session.duration_minutes)).scalar() or 0
+@router.get("/summary")
+def get_summary(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    # Notice we added the filter for current_user.id to every query!
+    total_problems = db.query(models.Problem).filter(
+        models.Problem.user_id == current_user.id
+    ).count()
+    
+    total_solved = db.query(models.Problem).filter(
+        models.Problem.user_id == current_user.id,
+        models.Problem.is_solved == True
+    ).count()
+    
+    total_minutes = db.query(func.sum(models.Session.duration_minutes)).filter(
+        models.Session.user_id == current_user.id
+    ).scalar() or 0
 
-    return {'total_problems': total_problems,'total_solved':total_solved,'total_minutes':total_time}
+    return {
+        "total_problems": total_problems,
+        "total_solved": total_solved,
+        "total_minutes": total_minutes
+    }
 
 @router.get('/coach')
-def get_smart_coach(db: Session = Depends(get_db)):
+def get_smart_coach(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
     sessions = db.query(models.Session, models.Problem).join(models.Problem).all()
     
     if not sessions:
