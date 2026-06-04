@@ -30,7 +30,11 @@ if not st.session_state.token:
                     st.session_state.username = log_user
                     st.rerun()
                 else:
-                    st.error("Invalid credentials.")
+
+                    try:
+                        st.error(resp.json().get("detail", "Login failed"))
+                    except:
+                        st.error(f"Backend Crash: {resp.text}")
                     
     with tab2:
         with st.form("register_form",clear_on_submit=True):
@@ -41,7 +45,10 @@ if not st.session_state.token:
                 if resp.status_code == 200:
                     st.success("Registered successfully! You can now log in.")
                 else:
-                    st.error(resp.json().get("detail", "Registration failed"))
+                    try:
+                        st.error(resp.json().get("detail", "Registration failed"))
+                    except:
+                        st.error(f"Backend Crash: {resp.text}")
     
     
     st.stop() 

@@ -5,6 +5,7 @@ pydantic==2.7.3
 pandas==2.2.2
 requests==2.32.3
 psycopg2-binary==2.9.9
+bcrypt==3.2.2
 passlib[bcrypt]
 python-jose[cryptography]
 python-multipart
