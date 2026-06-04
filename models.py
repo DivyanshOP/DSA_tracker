@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, Date
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
@@ -12,7 +12,7 @@ class Problem(Base):
     topic = Column(String)       
     is_solved = Column(Boolean, default=False)
     url = Column(String, nullable=True)
-    
+    next_review_date = Column(Date, nullable=True)
     sessions = relationship("Session", back_populates="problem")
 
 class Session(Base):

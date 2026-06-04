@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
-
+from datetime import date
 
 class ProblemBase(BaseModel):
     title: str
@@ -8,6 +8,7 @@ class ProblemBase(BaseModel):
     topic: str
     is_solved: bool = False
     url: Optional[str] = None
+    next_review_date: Optional[date] = None
 
 
 class ProblemCreate(ProblemBase):
@@ -24,6 +25,7 @@ class ProblemUpdate(BaseModel):
     topic: Optional[str]= None
     url: Optional[str] = None
     is_solved: Optional[bool] = None
+    next_review_date: Optional[date] = None
 
 
 

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 import models, schemas
 from database import SessionLocal
-
+from datetime import date
 router = APIRouter(prefix="/problems", tags=["Problems"])
 
 def get_db():
@@ -37,3 +37,24 @@ def update_problem(problem_id:int,problem:schemas.ProblemUpdate,db: Session = De
     db.refresh(db_problem)
     return db_problem
 
+@router.get("/triage")
+def get_triage_queue(db: Session = Depends(get_db)):
+    # Fetch problems that are solved but have ZERO study sessions attached
+    triage_problems = db.query(models.Problem).filter(
+        models.Problem.is_solved == True,
+        ~models.Problem.sessions.any()
+    ).all()
+    
+    return triage_problems
+
+@router.get("/due")
+def get_due_problems(db: Session = Depends(get_db)):
+    today = date.today()
+    # Fetch problems that are solved AND their review date is today or earlier
+    due_problems = db.query(models.Problem).filter(
+        models.Problem.is_solved == True,
+        models.Problem.next_review_date != None,
+        models.Problem.next_review_date <= today
+    ).all()
+    
+    return due_problems

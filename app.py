@@ -35,7 +35,61 @@ if summary_data:
         st.metric(label="Total Time (Minutes)", value=summary_data["total_minutes"])
 
 
+try:
+    triage_resp = requests.get(f"{API_URL}/problems/triage")
+    triage_list = triage_resp.json() if triage_resp.status_code == 200 else []
+except:
+    triage_list = []
 
+if triage_list:
+    st.divider()
+    st.warning(f"🔔 **Inbox:** You have {len(triage_list)} synced problems missing study data!")
+    
+    current_problem = triage_list[0]
+    
+    with st.container(border=True): 
+        st.subheader(f"⚡ Quick Log: {current_problem['title']}")
+        st.caption(f"Topic: {current_problem['topic']} | Difficulty: {current_problem['difficulty']}")
+        
+        with st.form(f"triage_form_{current_problem['id']}", clear_on_submit=True):
+            t_col1, t_col2 = st.columns(2)
+            with t_col1:
+                duration = st.number_input("Estimated time spent (minutes)", min_value=1, step=5, value=20)
+            with t_col2:
+                status = st.selectbox("How did it go?", ["Confused", "Needed Hints", "Solved smoothly"])
+            
+            submit_triage = st.form_submit_button("Save & Next ➡️")
+            
+            if submit_triage:
+                session_payload = {
+                    "problem_id": current_problem['id'],
+                    "duration_minutes": duration,
+                    "status": status
+                }
+                # Log the session
+                requests.post(f"{API_URL}/sessions/", json=session_payload)
+                st.success("Saved!")
+                st.rerun() 
+st.divider()
+st.subheader("AI Smart Coach")
+
+try:
+    coach_resp = requests.get(f"{API_URL}/analytics/coach")
+    coach_data = coach_resp.json()
+    
+    if coach_data.get("status") == "success":
+        topic = coach_data['weakest_topic']
+        time = coach_data['avg_time']
+        struggle = coach_data['struggle_rate']
+        
+        st.warning(f"**Focus Area:** You are struggling with **{topic}**.")
+
+        st.write(f"You spend an average of **{time} minutes** per problem, and face friction **{struggle}%** of the time.")
+        st.info(f" **Coach Recommendation:** Do not jump to Hard problems. Filter LeetCode for 'Easy' {topic} problems and master the base patterns first.")
+    else:
+        st.info(f"**Coach says:** {coach_data.get('message', 'Keep logging sessions!')}")
+except Exception as e:
+    st.error("Coach API is sleeping. Wake it up!")
 st.divider()
 st.header("Log Activity")
 
@@ -65,6 +119,7 @@ with form_col1:
             if response.status_code == 200:
                 st.success(f"Added '{title}' successfully!")
                 st.rerun() 
+
 
 
 with form_col2:
