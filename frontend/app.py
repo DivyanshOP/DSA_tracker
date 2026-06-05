@@ -278,7 +278,7 @@ if problems_list:
         problems_list, 
         width="stretch", 
         hide_index=True,
-        column_order=["id", "title", "difficulty", "topic", "url", "is_solved"],
+        column_order=["title", "difficulty", "topic", "url", "is_solved"],
         column_config={
             "url": st.column_config.LinkColumn("Problem Link", display_text="Open in LeetCode 🔗")
         }
