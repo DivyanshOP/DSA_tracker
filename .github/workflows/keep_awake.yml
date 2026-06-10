@@ -1,0 +1,13 @@
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping App 1
+        run: curl -sL https://dsa-tracker-dj.streamlit.app/ > /dev/null
+        
+      - name: Ping App 2
+        run: curl -sL https://book-recommender-div.streamlit.app/ > /dev/null
