@@ -1,13 +1,30 @@
+name: Keep Streamlit Apps Awake (Advanced)
+
 on:
   schedule:
-    - cron: "0 */6 * * *"
+    - cron: "0 */6 * * *" # Runs every 6 hours
   workflow_dispatch:
+
 jobs:
-  ping:
+  keep-alive:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping App 1
-        run: curl -sL https://dsa-tracker-dj.streamlit.app/ > /dev/null
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Visit App 1 (Simulated Browser)
+        # Taking a screenshot forces the browser to fully render the page and execute the WebSockets
+        run: npx playwright screenshot --browser=chromium --timeout=15000 https://dsa-tracker-dj.streamlit.app/ app1.png
         
-      - name: Ping App 2
-        run: curl -sL https://book-recommender-div.streamlit.app/ > /dev/null
+      - name: Visit App 2 (Simulated Browser)
+        run: npx playwright screenshot --browser=chromium --timeout=15000 https://book-recommender-div.streamlit.app app2.png
+
+
+
+
+
